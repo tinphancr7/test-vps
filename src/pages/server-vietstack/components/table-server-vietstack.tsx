@@ -1,0 +1,270 @@
+import serverVietStackApis from '@/apis/server-vietstack-api';
+import Container from '@/components/container';
+import TableControl from '@/components/table-control';
+import { useAppDispatch, useAppSelector } from '@/stores';
+import { asyncThunkPaginationServerVietStack } from '@/stores/async-thunks/server-vietstack-thunk';
+import { formatPrice } from '@/utils/format-price';
+import showToast from '@/utils/toast';
+import { convertVnToUsd } from '@/utils/vn-to-usd';
+import { Button, Spinner, Tooltip } from '@heroui/react';
+import { useCallback, useEffect, useState } from 'react';
+import { FaCheck, FaRegCopy } from 'react-icons/fa6';
+import { RiCloseLine } from 'react-icons/ri';
+
+function TableServerVietStack() {
+    const dispatch = useAppDispatch();
+    const { serverList, total, isLoading } = useAppSelector((state) => state.serverVietStack);
+    const tableServerVietStack = useAppSelector((state) => state.table['server_vietstack']);
+
+    const [cPw, setCPw] = useState<any>({});
+
+    const columns = [
+        { _id: 'config', name: 'Service' },
+        { _id: 'main', name: 'Main' },
+        { _id: 'cpu', name: 'Cpu' },
+        { _id: 'team', name: 'Team' },
+        { _id: 'additionalRam', name: 'Ram' },
+        { _id: 'ssd', name: 'SSD' },
+        { _id: 'hdd', name: 'HDD' },
+        { _id: 'bandwidth', name: 'Băng thông' },
+        { _id: 'ip', name: 'ip' },
+        { _id: 'username', name: 'username' },
+        { _id: 'password', name: 'Password' },
+        { _id: 'backup', name: 'Backup' },
+        { _id: 'premiumSupport', name: 'Premium - Support' },
+        { _id: 'price', name: 'Price' },
+    ];
+
+    useEffect(() => {
+        const query: any = {};
+
+        if (tableServerVietStack) {
+            const cPageSize = tableServerVietStack?.pageSize
+                ? // eslint-disable-next-line no-unsafe-optional-chaining
+                  [...tableServerVietStack?.pageSize][0]
+                : 10;
+
+            query.pageIndex = tableServerVietStack?.pageIndex || 1;
+            query.pageSize = cPageSize;
+
+            dispatch(asyncThunkPaginationServerVietStack(query));
+        }
+
+        return () => {};
+    }, [tableServerVietStack]);
+
+    const handleCopy = (value: string) => {
+        navigator.clipboard.writeText(value);
+    };
+
+    const handleCopyPw = useCallback(
+        async (id: string) => {
+            if (cPw && cPw?._id === id) {
+                navigator.clipboard.writeText(cPw?.password);
+
+                return showToast('Đã sao chép mật khẩu', 'success');
+            }
+
+            try {
+                const { data } = await serverVietStackApis.getPwServer(id as string);
+
+                if (data?.status === 1) {
+                    if (!data?.data) {
+                        showToast('Chưa đặt mật khẩu cho server', 'info');
+                    } else {
+                        showToast('Đã sao chép mật khẩu', 'success');
+                        setCPw({
+                            _id: id,
+                            password: data?.data,
+                        });
+
+                        navigator.clipboard.writeText(data?.data);
+                    }
+                }
+            } catch (error: any) {
+                console.log('error: ', error);
+                if (error?.response?.data?.status === 37) {
+                    showToast('Bạn chỉ có thể lấy mật khẩu một lần!', 'error');
+                    return;
+                }
+                showToast('Sao chép mật khẩu thất bại', 'error');
+            }
+        },
+        [cPw],
+    );
+
+    const renderCell = useCallback((item: any, columnKey: string) => {
+        const cellValue = item[columnKey];
+
+        /*
+        const addNewActions = [
+            {
+                order: 1,
+                label: "Xem chi tiết",
+                icon: IoIosEye,
+                bgColor: "bg-warning",
+                isDisabled: false,
+                onPress: () => {
+                    onReadDetail(item);
+                },
+            },
+        ];
+    */
+
+        switch (columnKey) {
+            case 'config':
+                return <p className="font-semibold tracking-wider">{cellValue}</p>;
+            case 'main':
+                return (
+                    <p className="font-semibold tracking-wider">
+                        {item['configure']?.main ?? '(Trống)'}
+                    </p>
+                );
+            case 'cpu':
+                return (
+                    <p className="font-semibold tracking-wider">
+                        {item['configure']?.cpu ?? '(Trống)'}
+                    </p>
+                );
+            case 'team':
+                return (
+                    <p className="font-semibold tracking-wider">
+                        {item['team']?.name ?? '(Trống)'}
+                    </p>
+                );
+            case 'additionalRam':
+                return (
+                    <p className="font-semibold tracking-wider">
+                        {item['additionalRam']
+                            ? `${item['additionalRam'].quantity ?? 1} * ${
+                                  item['additionalRam']?.ramType
+                              }`
+                            : '(Trống)'}
+                    </p>
+                );
+            case 'ssd':
+                return (
+                    <p className="font-semibold tracking-wider">
+                        {item['configure']?.ssd ?? '(Trống)'}
+                    </p>
+                );
+            case 'hdd':
+                return (
+                    <p className="font-semibold tracking-wider">
+                        {item['configure']?.hdd ?? '(Trống)'}
+                    </p>
+                );
+            case 'bandwidth':
+                return (
+                    <p className="font-semibold tracking-wider">
+                        {item['configure']?.bandwidth ?? '(Trống)'}
+                    </p>
+                );
+
+            case 'price':
+                return (
+                    <p className="font-medium tracking-wider min-w-max">
+                        {formatPrice(convertVnToUsd(cellValue * 1.1, 'VNG')) || ''} $
+                    </p>
+                );
+
+            case 'dataCenter':
+                return <p className="font-medium tracking-wider">{cellValue}</p>;
+
+            case 'backup':
+                return <p className="text-center tracking-wide">{cellValue || 'Không'}</p>;
+
+            case 'premiumSupport':
+                return (
+                    <div className="flex justify-center items-center">
+                        {cellValue ? (
+                            <FaCheck className="w-5 h-5 text-success" />
+                        ) : (
+                            <RiCloseLine className="w-5 h-5 text-danger" />
+                        )}
+                    </div>
+                );
+
+            case 'ip':
+                if (!cellValue) {
+                    return <Spinner size="sm" aria-label="Loading..." />;
+                }
+
+                return (
+                    <Tooltip
+                        radius="sm"
+                        content={
+                            <div className="flex items-center gap-1 text-xs">
+                                <FaRegCopy />
+                                Sao chép
+                            </div>
+                        }
+                    >
+                        <Button
+                            variant="flat"
+                            color="primary"
+                            className="h-8 px-1 rounded-md text-dark data-[hover=true]:outline-primary data-[hover=true]:outline-1 tracking-wider"
+                            onPress={() => handleCopy(cellValue)}
+                        >
+                            {cellValue}
+                        </Button>
+                    </Tooltip>
+                );
+
+            case 'password':
+                return (
+                    <Tooltip
+                        showArrow
+                        color="primary"
+                        content={
+                            <div className="flex flex-col">
+                                <b className="text-center">Sao chép</b>
+                                <span>************</span>
+                            </div>
+                        }
+                    >
+                        <Button
+                            className="col-span-2 bg-transparent data-[hover=true]:bg-primary/50 rounded-sm min-h-max py-1 h-max w-max justify-start font-medium tracking-wide"
+                            onPress={() => handleCopyPw(item['_id'])}
+                        >
+                            ************
+                        </Button>
+                    </Tooltip>
+                );
+
+            /*
+          case "actions":
+              return (
+                  <ActionsCell
+                      disableDelete={true}
+                      disableUpdate={true}
+                      actionsAdd={addNewActions}
+                  />
+              );
+      */
+
+            default:
+                if (!cellValue && cellValue !== 0) {
+                    return <Spinner size="sm" aria-label="Loading..." />;
+                }
+
+                return <p className="text-center tracking-wide">{cellValue}</p>;
+        }
+    }, []);
+
+    return (
+        <Container>
+            <TableControl
+                tableId={'server_vietstack'}
+                columns={columns}
+                data={serverList}
+                total={total}
+                isLoading={isLoading}
+                renderCell={renderCell}
+                selectionMode="multiple"
+            />
+        </Container>
+    );
+}
+
+export default TableServerVietStack;

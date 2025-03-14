@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.scroll-main {
+  scroll-padding-top: 10px;
+  scroll-padding-right: 10px;
+  scroll-padding-bottom: 10px;
+}
+
+.scroll-main::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-main::-webkit-scrollbar-track {
+  border-radius: 50px;
+  background-color: #beb7b767;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+}
+
+.scroll-main::-webkit-scrollbar-thumb {
+  background-image: linear-gradient(-45deg, #ff9900, #ff99004b);
+  border-radius: 50px;
+}
+
+.scroll-main-x {
+  scroll-padding-left: 10px;
+  scroll-padding-right: 10px;
+  scroll-padding-bottom: 10px;
+}
+
+.scroll-main-x::-webkit-scrollbar {
+  width: 5px;
+  height: 8px;
+}
+
+.scroll-main-x::-webkit-scrollbar-track {
+  border-radius: 50px;
+  background-color: #beb7b767;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+}
+
+.scroll-main-x::-webkit-scrollbar-thumb {
+  background-image: linear-gradient(-45deg, #ff9900, #ff99004b);
+  border-radius: 50px;
+}
+
+input.ip-number::-webkit-outer-spin-button,
+input.ip-number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input.ip-number[type="number"] {
+  -moz-appearance: textfield;
+}
+
+#nextui-date-range-picker {
+  background-color: #ffffff !important;
+}
+
+#nextui-date-range-picker div[data-slot="input-field"] {
+  font-size: 13px !important;
+}
